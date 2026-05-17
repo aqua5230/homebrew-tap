@@ -7,9 +7,22 @@ cask "usag" do
   desc "Menu bar tool that displays Claude Code 5h / 7d usage"
   homepage "https://github.com/aqua5230/usage"
 
-  depends_on macos: ">= :monterey"
+  depends_on macos: :monterey
 
   app "usag.app"
+
+  postflight do
+    # usag is not Apple-signed (no Developer ID). On macOS 15+ the
+    # `Homebrew Cask` quarantine marker no longer suppresses the Gatekeeper
+    # prompt, and `com.apple.provenance` blocks `open` even after
+    # right-click → Open. Strip both attributes so users can launch the app
+    # from Finder or `open`.
+    ["com.apple.quarantine", "com.apple.provenance"].each do |attr|
+      system_command "/usr/bin/xattr",
+                     args:         ["-dr", attr, "#{appdir}/usag.app"],
+                     must_succeed: false
+    end
+  end
 
   zap trash: [
     "~/.claude/usag-status.json",
